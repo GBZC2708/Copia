@@ -70,35 +70,26 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
-    // Compose integration for HiltViewModel()
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Iconos
     implementation("androidx.compose.material:material-icons-extended")
 
-    // --- FIREBASE (Usando BoM para manejar versiones) ---
-    // Importa el BoM MÁS RECIENTE UNA SOLA VEZ
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
 
-    // Añade las dependencias de Firebase SIN especificar versión
-    implementation("com.google.firebase:firebase-analytics") // Analytics (opcional pero común)
-    implementation("com.google.firebase:firebase-ai") // Firebase AI (Gemini)
-    implementation("com.google.firebase:firebase-firestore") // Firestore
-
-    // 1. Crashlytics
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-ai")
+    implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-crashlytics-ndk")
-
-    // 2. Auth
     implementation("com.google.firebase:firebase-auth")
 
-    // --- COROUTINES & VIEWMODEL ---
-    // Para la extensión .await() con Tasks de Play Services
+    // Coroutines & Viewmodel
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
-    // ViewModels (versiones explícitas o puedes ponerlas en libs.versions.toml)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3") // Para viewModel() en Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
 
-    // --- NAVEGACIÓN ---
+    // Navegación
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // Camera X
@@ -124,9 +115,6 @@ dependencies {
     implementation("androidx.core:core-ktx") // Ya incluido arriba
     implementation("com.google.firebase:firebase-storage")
 
-
     // Coil para cargar imágenes (AsyncImage)
     implementation("io.coil-kt:coil-compose:2.4.0")
-
-
 }

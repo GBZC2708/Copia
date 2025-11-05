@@ -46,7 +46,7 @@ fun ScoreChip(
             .background(backgroundColor, shape)
             .padding(horizontal = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Icon(
             imageVector = icon,

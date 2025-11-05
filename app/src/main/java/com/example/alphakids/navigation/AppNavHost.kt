@@ -592,7 +592,11 @@ fun AppNavHost(
                     }
                     navigateToStudentBottomNav(targetRoute)
                 },
-                currentRoute = "store"
+                currentRoute = "store",
+                studentId = studentId,
+                dogImageResId = com.example.alphakids.R.drawable.ic_happy_dog,
+                catImageResId = com.example.alphakids.R.drawable.ic_happy_cat,
+                coins = 123
             )
         }
 
@@ -614,7 +618,12 @@ fun AppNavHost(
                     }
                     navigateToStudentBottomNav(targetRoute)
                 },
-                currentRoute = "store"
+                currentRoute = "store",
+                studentId = studentId,
+                coins = 123,
+                croquetasImageResId = com.example.alphakids.R.drawable.ic_kibble_dog_cat,
+                huesoImageResId = com.example.alphakids.R.drawable.ic_bone_dog,
+                pescadoImageResId = com.example.alphakids.R.drawable.ic_fish_cat
             )
         }
 

@@ -28,7 +28,7 @@ import com.example.alphakids.ui.screens.tutor.games.components.WordPuzzleCard
 import com.example.alphakids.ui.theme.dmSansFamily
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
+@Composable 
 fun AssignedWordsScreen(
     studentId: String,
     onBackClick: () -> Unit,

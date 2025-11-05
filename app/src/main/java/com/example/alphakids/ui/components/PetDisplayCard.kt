@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
 import com.example.alphakids.ui.theme.AlphakidsTheme
 import com.example.alphakids.ui.theme.dmSansFamily
 
@@ -31,7 +32,8 @@ fun PetDisplayCard(
     modifier: Modifier = Modifier,
     petName: String,
     petImage: Painter,
-    backgroundColor: Color = MaterialTheme.colorScheme.tertiaryContainer
+    backgroundColor: Color = MaterialTheme.colorScheme.tertiaryContainer,
+    onClick: (() -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(28.dp)
 
@@ -40,6 +42,7 @@ fun PetDisplayCard(
             .fillMaxWidth()
             .clip(shape)
             .background(backgroundColor, shape)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 35.dp, vertical = 35.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp) // 5 dp de gap

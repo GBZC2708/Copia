@@ -11,7 +11,11 @@ import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.alphakids.ui.components.AppHeader
 import com.example.alphakids.ui.components.BottomNavItem
 import com.example.alphakids.ui.components.CustomFAB
@@ -23,7 +27,8 @@ fun StudentPetsScreen(
     onLogoutClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onBottomNavClick: (String) -> Unit,
-    currentRoute: String = "pets"
+    currentRoute: String = "pets",
+    onPetDetailClick: (String) -> Unit = {}
 ) {
     val studentItems = listOf(
         BottomNavItem("home", "Inicio", Icons.Rounded.Home),
@@ -69,8 +74,50 @@ fun StudentPetsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
         ) {
-            // Pantalla vacía de prueba
-            Text(text = "Mascotas en construcción", style = MaterialTheme.typography.titleMedium)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Cuida a tus mascotas ❤️",
+                        fontFamily = com.example.alphakids.ui.theme.dmSansFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Elige a una de ellas",
+                        fontFamily = com.example.alphakids.ui.theme.dmSansFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        com.example.alphakids.ui.components.PetDisplayCard(
+                            modifier = Modifier.weight(1f),
+                            petName = "Max",
+                            petImage = painterResource(id = com.example.alphakids.R.drawable.ic_happy_dog),
+                            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            onClick = { onPetDetailClick("Max") }
+                        )
+                        com.example.alphakids.ui.components.PetDisplayCard(
+                            modifier = Modifier.weight(1f),
+                            petName = "Jack",
+                            petImage = painterResource(id = com.example.alphakids.R.drawable.ic_happy_cat),
+                            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    }
+                }
+            }
         }
     }
 }

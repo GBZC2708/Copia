@@ -3,6 +3,7 @@ package com.example.alphakids.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +37,7 @@ fun StatProgressBar(
     modifier: Modifier = Modifier,
     progress: Float,
     statText: String? = null,
-    barHeight: Int = 30,
+    barHeight: Int = 22,
     isWarning: Boolean = false
 ) {
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -89,31 +90,32 @@ fun PetStatusCard(
     happinessProgress: Float
 ) {
     val shape = RoundedCornerShape(28.dp)
+    val containerColor = if (isSystemInDarkTheme()) Color.Black else Color.White
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Color.White, shape)
+            .background(containerColor, shape)
             .border(2.dp, MaterialTheme.colorScheme.outline, shape)
-            .padding(all = 15.dp),
+            .padding(all = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = "¡Cuida a tu mascota!",
             fontFamily = dmSansFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Image(
             painter = petImage,
             contentDescription = petName,
-            modifier = Modifier.size(204.dp, 135.dp)
+            modifier = Modifier.size(160.dp, 110.dp)
         )
 
         Row(
@@ -124,12 +126,12 @@ fun PetStatusCard(
                 text = petName,
                 fontFamily = dmSansFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "⭐",
-                fontSize = 24.sp
+                fontSize = 22.sp
             )
         }
 
@@ -137,38 +139,40 @@ fun PetStatusCard(
             text = petType,
             fontFamily = dmSansFamily,
             fontWeight = FontWeight.Normal,
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = "Hambre",
                 fontFamily = dmSansFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
             StatProgressBar(
                 progress = hungerProgress,
-                isWarning = hungerProgress < 0.3f
+                isWarning = hungerProgress < 0.3f,
+                barHeight = 22
             )
 
             Text(
                 text = "Felicidad",
                 fontFamily = dmSansFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
             StatProgressBar(
                 progress = happinessProgress,
-                isWarning = happinessProgress < 0.3f
+                isWarning = happinessProgress < 0.3f,
+                barHeight = 22
             )
         }
     }

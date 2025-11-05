@@ -47,6 +47,7 @@ import com.example.alphakids.ui.screens.tutor.pets.StudentPetsScreen
 import com.example.alphakids.ui.screens.tutor.store.StudentAccessoriesStoreScreen
 import com.example.alphakids.ui.screens.tutor.store.StudentPetsStoreScreen
 import com.example.alphakids.ui.screens.tutor.store.StudentStoreScreen
+import com.example.alphakids.ui.screens.tutor.pets.StudentPetDetailScreen
 
 @Composable
 fun AppNavHost(
@@ -645,7 +646,38 @@ fun AppNavHost(
                     }
                     navigateToStudentBottomNav(targetRoute)
                 },
-                currentRoute = "pets"
+                currentRoute = "pets",
+                onPetDetailClick = { petName ->
+                    navController.navigate(Routes.petDetailRoute(studentId, petName))
+                }
+            )
+        }
+        
+        // Detalle de Mascota
+        composable(
+            route = Routes.PET_DETAIL,
+            arguments = listOf(
+                navArgument("studentId") { type = NavType.StringType },
+                navArgument("petName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val studentId = backStackEntry.arguments?.getString("studentId") ?: "default"
+            val petName = backStackEntry.arguments?.getString("petName") ?: "Mi Mascota"
+
+            StudentPetDetailScreen(
+                onBackClick = { navController.popBackStack() },
+                onLogoutClick = onLogout,
+                onSettingsClick = { navController.navigate(Routes.editStudentProfileRoute(studentId)) },
+                onBottomNavClick = { route ->
+                    val targetRoute = when (route) {
+                        "home" -> Routes.homeRoute(studentId)
+                        "store" -> Routes.storeRoute(studentId)
+                        else -> Routes.petsRoute(studentId)
+                    }
+                    navigateToStudentBottomNav(targetRoute)
+                },
+                currentRoute = "pets",
+                petName = petName
             )
         }
     }

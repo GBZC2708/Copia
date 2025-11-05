@@ -100,4 +100,8 @@ object Routes {
 
     const val STORE_ACCESSORIES = "store/accessories/{studentId}"
     fun storeAccessoriesRoute(studentId: String) = "store/accessories/$studentId"
+    // Detalle de Mascota
+    const val PET_DETAIL_BASE = "pet_detail"
+    const val PET_DETAIL = "$PET_DETAIL_BASE/{studentId}/{petName}"
+    fun petDetailRoute(studentId: String, petName: String) = "$PET_DETAIL_BASE/$studentId/$petName"
 }

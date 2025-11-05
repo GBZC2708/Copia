@@ -28,14 +28,15 @@ fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
 ) {
     Button(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         shape = RoundedCornerShape(28.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+        contentPadding = contentPadding,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -82,3 +83,4 @@ fun PrimaryButtonWithIconPreview() {
         )
     }
 }
+

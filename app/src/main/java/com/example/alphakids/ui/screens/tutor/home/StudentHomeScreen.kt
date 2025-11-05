@@ -36,7 +36,7 @@ import com.example.alphakids.ui.components.AppHeader
 import com.example.alphakids.ui.components.BottomNavItem
 import com.example.alphakids.ui.components.CustomFAB
 import com.example.alphakids.ui.components.MainBottomBar
-import com.example.alphakids.ui.screens.tutor.home.components.DashboardActionCard
+import com.example.alphakids.ui.components.DashboardActionCard
 import com.example.alphakids.ui.theme.AlphakidsTheme
 import com.example.alphakids.ui.theme.dmSansFamily
 

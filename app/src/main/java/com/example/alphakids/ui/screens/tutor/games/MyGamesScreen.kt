@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alphakids.ui.components.AppHeader
-import com.example.alphakids.ui.screens.tutor.home.components.DashboardActionCard
+import com.example.alphakids.ui.components.DashboardActionCard
 import com.example.alphakids.ui.theme.AlphakidsTheme
 import com.example.alphakids.ui.theme.dmSansFamily
 

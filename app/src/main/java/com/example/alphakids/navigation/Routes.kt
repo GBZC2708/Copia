@@ -25,14 +25,32 @@ object Routes {
     const val HOME = "$HOME_BASE/{studentId}"
     fun homeRoute(studentId: String) = "$HOME_BASE/$studentId"
 
-    // Rutas de la barra inferior (BottomNav)
+    // --- Bottom Navigation del Estudiante (COMPLETADO) ---
+    const val STORE = "store/{studentId}"
+    fun storeRoute(studentId: String) = "store/$studentId"
+
+    const val PETS = "pets/{studentId}"
+    fun petsRoute(studentId: String) = "pets/$studentId"
+
     const val DICTIONARY = "dictionary/{studentId}"
     fun dictionaryRoute(studentId: String) = "dictionary/$studentId"
 
     const val ACHIEVEMENTS = "achievements/{studentId}"
     fun achievementsRoute(studentId: String) = "achievements/$studentId"
 
-    // --- Rutas de Juego (actualizadas) ---
+    // --- Subrutas de Tienda (AGREGADAS) ---
+    const val STORE_PETS = "store/pets/{studentId}"
+    fun storePetsRoute(studentId: String) = "store/pets/$studentId"
+
+    const val STORE_ACCESSORIES = "store/accessories/{studentId}"
+    fun storeAccessoriesRoute(studentId: String) = "store/accessories/$studentId"
+
+    // --- Detalle de Mascota (AGREGADO) ---
+    const val PET_DETAIL_BASE = "pet_detail"
+    const val PET_DETAIL = "$PET_DETAIL_BASE/{studentId}/{petName}"
+    fun petDetailRoute(studentId: String, petName: String) = "$PET_DETAIL_BASE/$studentId/$petName"
+
+    // --- Rutas de Juego ---
     const val MY_GAMES_BASE = "my_games"
     const val MY_GAMES = "$MY_GAMES_BASE/{studentId}"
     fun myGamesRoute(studentId: String) = "$MY_GAMES_BASE/$studentId"
@@ -51,7 +69,7 @@ object Routes {
     const val GAME = "game"
     const val CAMERA = "camera"
 
-    // OCR Camera routes
+    // OCR Camera routes (YA ESTABA, SE MANTIENE)
     const val CAMERA_OCR_BASE = "camera_ocr"
     const val CAMERA_OCR = "$CAMERA_OCR_BASE/{assignmentId}/{targetWord}"
     fun cameraOCRRoute(assignmentId: String, targetWord: String) = "$CAMERA_OCR_BASE/$assignmentId/$targetWord"

@@ -57,7 +57,7 @@ fun CameraOCRScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
-    
+
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     var detectedText by remember { mutableStateOf("") }
@@ -66,7 +66,7 @@ fun CameraOCRScreen(
 
     // TTS Setup
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
-    
+
     LaunchedEffect(Unit) {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -87,7 +87,7 @@ fun CameraOCRScreen(
         if (!isWordCompleted && detectedText.trim().uppercase() == targetWord.trim().uppercase()) {
             isWordCompleted = true
             showSuccessAnimation = true
-            
+
             // Play TTS
             tts?.speak(
                 "¡Bien hecho! La palabra es $targetWord",
@@ -95,10 +95,10 @@ fun CameraOCRScreen(
                 null,
                 null
             )
-            
+
             // Save to storage
             WordHistoryStorage.saveCompletedWord(context, targetWord)
-            
+
             // Hide animation after 3 seconds and complete
             delay(3000)
             onWordCompleted()
@@ -125,20 +125,20 @@ fun CameraOCRScreen(
             ) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
-                
+
                 // Define ROI dimensions (centered rectangle)
                 val roiWidth = canvasWidth * 0.8f
                 val roiHeight = canvasHeight * 0.3f
                 val roiLeft = (canvasWidth - roiWidth) / 2
                 val roiTop = (canvasHeight - roiHeight) / 2
-                
+
                 // Draw semi-transparent overlay
                 drawRect(
                     color = Color.Black.copy(alpha = 0.5f),
                     topLeft = Offset.Zero,
                     size = size
                 )
-                
+
                 // Clear the ROI area
                 drawRect(
                     color = Color.Transparent,
@@ -146,7 +146,7 @@ fun CameraOCRScreen(
                     size = Size(roiWidth, roiHeight),
                     blendMode = androidx.compose.ui.graphics.BlendMode.Clear
                 )
-                
+
                 // Draw ROI border
                 drawRect(
                     color = Color.Green,
@@ -246,7 +246,7 @@ fun CameraOCRScreen(
             previewView?.let { preview ->
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
                 cameraProvider = cameraProviderFuture.get()
-                
+
                 setupCamera(
                     cameraProvider = cameraProvider!!,
                     previewView = preview,

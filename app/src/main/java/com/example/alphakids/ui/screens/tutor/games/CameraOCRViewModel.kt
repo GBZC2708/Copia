@@ -59,24 +59,24 @@ class CameraOCRViewModel @Inject constructor(
     fun processDetectedText(detectedText: String) {
         val cleanText = detectedText.trim().uppercase()
         val targetWord = _uiState.value.targetWord
-        
+
         _uiState.value = _uiState.value.copy(detectedText = cleanText)
-        
+
         // Check if target word is found in detected text
         val isWordFound = cleanText.contains(targetWord) && targetWord.isNotEmpty()
-        
+
         if (isWordFound && !_uiState.value.isWordDetected) {
             // Word detected for the first time
             wordDetectedTime = System.currentTimeMillis()
             _uiState.value = _uiState.value.copy(isWordDetected = true)
-            
+
             // Speak success message
             val successMessage = "¡Bien hecho! La palabra es $targetWord"
             speakText(successMessage)
-            
+
             // Save completion to history
             saveWordCompletion(targetWord)
-            
+
             Log.d("CameraOCR", "Word '$targetWord' detected successfully!")
         } else if (!isWordFound && _uiState.value.isWordDetected) {
             // Word no longer detected, reset after a delay
@@ -103,7 +103,7 @@ class CameraOCRViewModel @Inject constructor(
                     "word" to word,
                     "timestamp" to System.currentTimeMillis()
                 )
-                
+
                 firestore.collection("completed_words")
                     .add(completedWordData)
                     .addOnSuccessListener {

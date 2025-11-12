@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController // <-- ¡IMPORTADO!
+import com.example.alphakids.navigation.Routes
 import com.example.alphakids.ui.screens.tutor.games.components.WordPuzzleCard
 import com.example.alphakids.ui.theme.dmSansFamily
 import java.net.URLEncoder
@@ -22,6 +23,7 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun WordPuzzleScreen(
     assignmentId: String,
+    studentId: String,
     onBackClick: () -> Unit,
     navController: NavController, // <-- ¡CAMBIO 1! Añadido NavController
     viewModel: WordPuzzleViewModel = hiltViewModel()
@@ -95,26 +97,26 @@ fun WordPuzzleScreen(
                         wordImage = wordImage,
                         difficulty = uiState.assignment!!.palabraDificultad,
 
-                        // --- ¡CAMBIO PARA DEBUGGEAR! ---
                         onTakePhotoClick = {
-                            // --- ¡LOG DE ERROR "RUIDOSO"! ---
-                            Log.e("!!! DEBUG !!!", "BOTÓN PRESIONADO, URL ES: $wordImage")
-                            // ---------------------------------
-
-                            // 1. Codifica la URL
+                            // 1. Codificar la URL opcional de la imagen
                             val encodedUrl = wordImage?.let {
                                 URLEncoder.encode(it, StandardCharsets.UTF_8.name())
                             }
 
-                            if (encodedUrl == null) {
-                                // 2. Si no hay imagen, navega
-                                Log.d("!!! DEBUG !!!", "Navegando SIN imagen")
-                                navController.navigate("camera_ocr/$assignmentId/$targetWord")
-                            } else {
-                                // 3. Si SÍ hay imagen, navega CON la URL
-                                Log.d("!!! DEBUG !!!", "Navegando CON imagen")
-                                navController.navigate("camera_ocr/$assignmentId/$targetWord?imageUrl=$encodedUrl")
-                            }
+                            // 2. Codificar la palabra objetivo (CRÍTICO: por si tiene espacios)
+                            val encodedTargetWord = URLEncoder.encode(targetWord, StandardCharsets.UTF_8.name())
+
+                            // 3. 🚨 USAR LA FUNCIÓN HELPER DEL ARCHIVO ROUTES.KT CORREGIDO
+                            val route = Routes.cameraOcrRoute(
+                                assignmentId = assignmentId,
+                                targetWord = encodedTargetWord, // Usa la palabra codificada
+                                studentId = studentId,
+                                imageUrl = encodedUrl // Usa la URL codificada (puede ser null)
+                            )
+
+                            Log.d("!!! DEBUG !!!", "Navegando con RUTA CORREGIDA: $route")
+                            // Ejemplo de ruta generada ahora: camera_ocr/3UbgGgbvj0W9H5c3hrQ8/sapo/U53IJFxxGBs9SE2kjGde?imageUrl=...
+                            navController.navigate(route)
                         }
                     )
 // ...

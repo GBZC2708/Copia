@@ -1,10 +1,9 @@
 package com.example.alphakids.navigation
 
 object Routes {
-
-    // ============================================================
-    // ROLES
-    // ============================================================
+// ============================================================
+// ROLES
+// ============================================================
     const val ROLE_TEACHER = "teacher"
     const val ROLE_TUTOR = "tutor"
 
@@ -66,6 +65,19 @@ object Routes {
     // ============================================================
     // JUEGOS
     // ============================================================
+    const val GAME_RESULT_BASE = "game_result"
+    const val GAME_RESULT = "$GAME_RESULT_BASE/{word}/{studentId}?imageUrl={imageUrl}"
+    /** 🚨 ¡MODIFICACIÓN! Ahora incluye studentId como requerido. */
+    fun gameResultRoute(word: String, studentId: String, imageUrl: String?) =
+        "$GAME_RESULT_BASE/$word/$studentId${if (imageUrl != null) "?imageUrl=$imageUrl" else ""}"
+
+    // RUTAS SI FALLA
+    const val GAME_FAILURE_BASE = "game_failure"
+    const val GAME_FAILURE = "$GAME_FAILURE_BASE/{studentId}?imageUrl={imageUrl}"
+    /** 🚨 ¡MODIFICACIÓN! Ahora incluye studentId como requerido. */
+    fun gameFailureRoute(studentId: String, imageUrl: String?) =
+        "$GAME_FAILURE_BASE/$studentId${if (imageUrl != null) "?imageUrl=$imageUrl" else ""}"
+
     const val MY_GAMES_BASE = "my_games"
     const val MY_GAMES = "$MY_GAMES_BASE/{studentId}"
     fun myGamesRoute(studentId: String) = "$MY_GAMES_BASE/$studentId"
@@ -78,16 +90,19 @@ object Routes {
     fun assignedWordsRoute(studentId: String) = "assigned_words/$studentId"
 
     const val WORD_PUZZLE_BASE = "word_puzzle"
-    const val WORD_PUZZLE = "$WORD_PUZZLE_BASE/{assignmentId}"
-    fun wordPuzzleRoute(assignmentId: String) = "$WORD_PUZZLE_BASE/$assignmentId"
+    const val WORD_PUZZLE = "$WORD_PUZZLE_BASE/{assignmentId}/{studentId}"
+    /** 🚨 ¡MODIFICACIÓN! Ahora incluye studentId como requerido. */
+    fun wordPuzzleRoute(assignmentId: String, studentId: String) = "$WORD_PUZZLE_BASE/$assignmentId/$studentId"
 
     const val GAME = "game"
 
     // OCR
     const val CAMERA_OCR_BASE = "camera_ocr"
-    const val CAMERA_OCR = "$CAMERA_OCR_BASE/{assignmentId}/{targetWord}"
-    fun cameraOCRRoute(assignmentId: String, targetWord: String) =
-        "$CAMERA_OCR_BASE/$assignmentId/$targetWord"
+    /** 🚨 ¡MODIFICACIÓN CRÍTICA! Ahora assignmentId, targetWord y studentId son requeridos en la ruta base. */
+    const val CAMERA_OCR = "$CAMERA_OCR_BASE/{assignmentId}/{targetWord}/{studentId}?imageUrl={imageUrl}"
+
+    fun cameraOcrRoute(assignmentId: String, targetWord: String, studentId: String, imageUrl: String?) =
+        "$CAMERA_OCR_BASE/$assignmentId/$targetWord/$studentId${if (imageUrl != null) "?imageUrl=$imageUrl" else ""}"
 
     // ============================================================
     // DOCENTE

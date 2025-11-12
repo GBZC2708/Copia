@@ -2,6 +2,8 @@ package com.example.alphakids.ui.screens.tutor.studentprofile
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -9,8 +11,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.ChildCare
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,8 +36,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.alphakids.ui.student.DocenteUi
 import com.example.alphakids.ui.student.StudentUiState
 import com.example.alphakids.ui.student.StudentViewModel
+import com.example.alphakids.ui.student.UiState
 import com.example.alphakids.ui.components.AppHeader
 import com.example.alphakids.ui.components.IconContainer
 import com.example.alphakids.ui.components.LabeledDropdownField
@@ -49,12 +67,25 @@ fun CreateStudentProfileScreen(
     var selectedInstitucion by remember { mutableStateOf<String?>(null) }
     var selectedGrado by remember { mutableStateOf<String?>(null) }
     var selectedSeccion by remember { mutableStateOf<String?>(null) }
+    var selectedDocenteId by remember { mutableStateOf<String?>(null) }
+    var selectedDocenteName by remember { mutableStateOf<String?>(null) }
+    var showDocenteDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.createUiState.collectAsState()
+    val docentesUiState by viewModel.docentesUi.collectAsState()
+    val docentes = remember(docentesUiState) {
+        when (val state = docentesUiState) {
+            is UiState.Success -> state.data
+            else -> emptyList()
+        }
+    }
     val isLoading = uiState is StudentUiState.Loading
+    val isDocentesLoading = docentesUiState is UiState.Loading
+    val noDocentesAvailable = docentesUiState is UiState.Success && docentes.isEmpty()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
+        viewModel.loadDocentes(selectedInstitucion?.takeIf { !it.isNullOrBlank() })
         viewModel.createUiState.collectLatest { state ->
             when (state) {
                 is StudentUiState.Success -> {
@@ -66,9 +97,36 @@ fun CreateStudentProfileScreen(
                     Toast.makeText(context, "Error: ${state.message}", Toast.LENGTH_LONG).show()
                     viewModel.resetCreateState()
                 }
-                else -> {}
+                else -> Unit
             }
         }
+    }
+
+    LaunchedEffect(selectedInstitucion) {
+        viewModel.loadDocentes(selectedInstitucion?.takeIf { !it.isNullOrBlank() })
+    }
+
+    LaunchedEffect(docentesUiState) {
+        if (docentesUiState is UiState.Error) {
+            Toast.makeText(
+                context,
+                (docentesUiState as UiState.Error).message,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    LaunchedEffect(docentes) {
+        if (selectedDocenteId != null && docentes.none { it.uid == selectedDocenteId }) {
+            selectedDocenteId = null
+            selectedDocenteName = null
+        }
+    }
+
+    val docentePlaceholder = if (noDocentesAvailable) {
+        "Sin docentes disponibles"
+    } else {
+        "Selecciona docente"
     }
 
     Scaffold(
@@ -116,7 +174,12 @@ fun CreateStudentProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Nuevo Perfil", fontFamily = dmSansFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                 Spacer(modifier = Modifier.height(5.dp))
-                Text("Ingresa los datos de tu hijo", fontFamily = dmSansFamily, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "Ingresa los datos de tu hijo",
+                    fontFamily = dmSansFamily,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(32.dp))
 
                 LabeledTextField(
@@ -170,8 +233,23 @@ fun CreateStudentProfileScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                if (uiState is StudentUiState.Error) {
+                LabeledDropdownField(
+                    label = "Docente",
+                    selectedOption = selectedDocenteName ?: "",
+                    placeholderText = docentePlaceholder,
+                    onClick = {
+                        if (docentes.isEmpty()) {
+                            Toast.makeText(context, "Sin docentes disponibles", Toast.LENGTH_SHORT).show()
+                        } else {
+                            showDocenteDialog = true
+                        }
+                    }
+                )
 
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (uiState is StudentUiState.Error) {
+                    // Error state handled via toast collector
                 }
 
                 PrimaryButton(
@@ -190,6 +268,10 @@ fun CreateStudentProfileScreen(
                             Toast.makeText(context, "Ingresa una edad válida", Toast.LENGTH_SHORT).show()
                             return@PrimaryButton
                         }
+                        if (selectedDocenteId == null) {
+                            Toast.makeText(context, "Selecciona un docente", Toast.LENGTH_SHORT).show()
+                            return@PrimaryButton
+                        }
 
                         viewModel.createStudent(
                             nombre = nombre,
@@ -197,19 +279,84 @@ fun CreateStudentProfileScreen(
                             edad = edadInt,
                             grado = selectedGrado ?: "",
                             seccion = selectedSeccion ?: "",
-                            idInstitucion = "" // TODO: Replace "" with actual institution ID
+                            idInstitucion = "", // TODO: Replace "" with actual institution ID
+                            idDocente = selectedDocenteId!!
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
+                    enabled = !isLoading && !isDocentesLoading && docentes.isNotEmpty()
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            if (isLoading) {
+            if (isLoading || isDocentesLoading) {
                 CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
+    }
+
+    if (showDocenteDialog) {
+        var docenteSearch by remember { mutableStateOf("") }
+        val filteredDocentes = remember(docentes, docenteSearch) {
+            if (docenteSearch.isBlank()) {
+                docentes
+            } else {
+                docentes.filter { docente ->
+                    docente.nombreCompleto.contains(docenteSearch, ignoreCase = true)
+                }
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { showDocenteDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showDocenteDialog = false }) {
+                    Text("Cerrar")
+                }
+            },
+            title = {
+                Text(
+                    text = "Selecciona un docente",
+                    fontFamily = dmSansFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    if (docentes.size > 5) {
+                        OutlinedTextField(
+                            value = docenteSearch,
+                            onValueChange = { docenteSearch = it },
+                            label = { Text("Buscar") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (filteredDocentes.isEmpty()) {
+                        Text("Sin resultados")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 320.dp)
+                        ) {
+                            items(filteredDocentes, key = DocenteUi::uid) { docente ->
+                                TextButton(
+                                    onClick = {
+                                        selectedDocenteId = docente.uid
+                                        selectedDocenteName = docente.nombreCompleto
+                                        showDocenteDialog = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(docente.nombreCompleto)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
     }
 }
 

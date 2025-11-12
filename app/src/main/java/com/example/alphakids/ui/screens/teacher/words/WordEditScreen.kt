@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +24,17 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Checkroom
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,8 +58,7 @@ import coil.compose.AsyncImage
 import com.example.alphakids.domain.models.Word
 import com.example.alphakids.ui.components.AppHeader
 import com.example.alphakids.ui.components.LetterBox
-import com.example.alphakids.ui.components.LabeledDropdownField
-import com.example.alphakids.ui.components.LabeledTextField
+import com.example.alphakids.ui.components.LabeledTextField // Mantener import
 import com.example.alphakids.ui.components.PrimaryButton
 import com.example.alphakids.ui.components.PrimaryIconButton
 import com.example.alphakids.ui.components.SecondaryTonalButton
@@ -61,6 +67,85 @@ import com.example.alphakids.ui.screens.teacher.words.components.ImageUploadBox
 import com.example.alphakids.ui.theme.dmSansFamily
 import com.example.alphakids.ui.word.WordUiState
 import com.example.alphakids.ui.word.WordViewModel
+
+// *** Implementación de LabeledDropdownField refactorizado para usar ExposedDropdownMenuBox ***
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LabeledDropdownField(
+    label: String,
+    selectedOption: String,
+    options: List<String>,
+    placeholderText: String,
+    onOptionSelected: (String) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontFamily = dmSansFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        ExposedDropdownMenuBox(
+            expanded = isExpanded,
+            onExpandedChange = { isExpanded = !isExpanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Este es el campo de texto que muestra la opción seleccionada
+            OutlinedTextField(
+                value = selectedOption.ifEmpty { placeholderText },
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text(placeholderText) },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = "Expandir menú",
+                        modifier = Modifier
+                            .clickable { isExpanded = true }
+                            .menuAnchor() // Necesario para ExposedDropdownMenuBox
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                shape = RoundedCornerShape(28.dp),
+                colors = ExposedDropdownMenuDefaults.textFieldColors(
+                    // Cambiar containerColor a unfocusedContainerColor (o mantener containerColor si la versión lo permite)
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, // Añadir este para el estado de foco
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                    // Reemplazar readOnlyTextColor por disabledTextColor ya que readOnly=true
+                    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            // Este es el menú desplegable
+            ExposedDropdownMenu(
+                expanded = isExpanded,
+                onDismissRequest = { isExpanded = false },
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            onOptionSelected(option)
+                            isExpanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    )
+                }
+            }
+        }
+    }
+}
+// *** Fin de la implementación de LabeledDropdownField refactorizado ***
+
 
 @Composable
 fun WordEditScreen(
@@ -71,6 +156,10 @@ fun WordEditScreen(
     onCancelClick: () -> Unit
 ) {
     val context = LocalContext.current
+
+    // --- Definición de las listas de opciones ---
+    val dificultadOptions = listOf("Fácil", "Intermedio", "Difícil")
+    val categoriaOptions = listOf("Animales", "Objetos", "Comida", "Lugares") // Se puede editar
 
     val wordUiState by viewModel.uiState.collectAsState()
     val selectedImageUri by viewModel.selectedImageUri.collectAsState()
@@ -151,18 +240,22 @@ fun WordEditScreen(
                 onClick = { imagePickerLauncher.launch("image/*") }
             )
 
+            // --- Uso del Dropdown para Categoría ---
             LabeledDropdownField(
                 label = "Categoría",
                 selectedOption = categoria,
+                options = categoriaOptions,
                 placeholderText = "Selecciona categoría",
-                onClick = { }
+                onOptionSelected = { categoria = it }
             )
 
+            // --- Uso del Dropdown para Dificultad ---
             LabeledDropdownField(
                 label = "Dificultad",
                 selectedOption = dificultad,
+                options = dificultadOptions,
                 placeholderText = "Selecciona dificultad",
-                onClick = { }
+                onOptionSelected = { dificultad = it }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -233,7 +326,7 @@ fun WordEditScreen(
         }
     }
 }
-
+//... (El resto de la función WordPreview se mantiene sin cambios)
 @Composable
 private fun WordPreview(
     word: String,

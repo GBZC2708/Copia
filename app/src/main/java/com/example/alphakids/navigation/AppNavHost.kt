@@ -1,5 +1,6 @@
 package com.example.alphakids.navigation
 
+import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,6 +48,8 @@ import com.example.alphakids.ui.screens.tutor.pets.StudentPetDetailScreen
 
 // Profile
 import com.example.alphakids.ui.screens.profile.EditProfileScreen
+
+import androidx.compose.material.icons.rounded.Warning
 
 
 @Composable
@@ -394,8 +397,10 @@ fun AppNavHost(
             arguments = listOf(navArgument("wordId") { type = NavType.StringType; nullable = true })
         ) { entry ->
             val wordId = entry.arguments?.getString("wordId")
-            val parent = navController.getBackStackEntry(Routes.WORDS)
-            val viewModel: WordViewModel = hiltViewModel(parent)
+            val parentEntry = remember(entry) {
+                navController.getBackStackEntry(Routes.WORDS)
+            }
+            val viewModel: WordViewModel = hiltViewModel(parentEntry)
             val words by viewModel.words.collectAsState()
             val word = words.find { it.id == wordId }
 
@@ -415,8 +420,10 @@ fun AppNavHost(
             val wordId = entry.arguments?.getString("wordId") ?: ""
             var showDeleteDialog by remember { mutableStateOf(false) }
 
-            val parent = navController.getBackStackEntry(Routes.WORDS)
-            val viewModel: WordViewModel = hiltViewModel(parent)
+            val parentEntry = remember(entry) {
+                navController.getBackStackEntry(Routes.WORDS)
+            }
+            val viewModel: WordViewModel = hiltViewModel(parentEntry)
             val words by viewModel.words.collectAsState()
             val uiState by viewModel.uiState.collectAsState()
             val word = words.find { it.id == wordId }
@@ -435,7 +442,7 @@ fun AppNavHost(
 
             if (showDeleteDialog) {
                 ActionDialog(
-                    icon = androidx.compose.material.icons.rounded.Warning,
+                    icon = Icons.Rounded.Warning,
                     message = "¿Estás seguro de eliminar esta palabra?",
                     primaryButtonText = "Eliminar",
                     onPrimaryButtonClick = { viewModel.deleteWord(wordId) },

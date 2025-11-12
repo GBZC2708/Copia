@@ -108,7 +108,7 @@ object Routes {
     fun editWordRoute(wordId: String) = "$WORD_EDIT_BASE?wordId=$wordId"
 
     const val WORD_DETAIL = "word_detail/{wordId}"
-    // comentando
+    // comentando//........
     fun wordDetailRoute(wordId: String) = "word_detail/$wordId"
 
     const val ASSIGN_WORD = "assign_word"

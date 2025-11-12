@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,15 @@ import com.example.alphakids.ui.screens.tutor.profile_selection.components.Stude
 import com.example.alphakids.ui.theme.AlphakidsTheme
 import com.example.alphakids.ui.theme.dmSansFamily
 
+// 🛑 ELIMINAMOS las importaciones antiguas
+// import com.example.alphakids.ui.utils.playBackgroundMusic
+// import com.example.alphakids.ui.utils.stopBackgroundMusic
+// import com.example.alphakids.ui.utils.MUSICA_FONDO_APP_URL
+
+// ✅ Importamos el nuevo gestor centralizado de audio
+import com.example.alphakids.ui.utils.MusicManager
+
+
 @Composable
 fun ProfileSelectionScreen(
     onProfileClick: (profileId: String) -> Unit,
@@ -34,11 +44,34 @@ fun ProfileSelectionScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     studentViewModel: StudentViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current // Necesario para iniciar la música con el Contexto
     val currentUser by authViewModel.currentUser.collectAsState()
     val tutorName = currentUser?.nombre
     val students by studentViewModel.students.collectAsState()
 
+    // --- LÓGICA DE MÚSICA DE FONDO ---
+
+    // 1. Iniciar la música cuando el Composable se carga por primera vez
+    LaunchedEffect(Unit) {
+        // ✅ USAMOS MusicManager para iniciar la música de la APP
+        MusicManager.startMusicaApp(context)
+    }
+
+    // 2. Control de pausa/reinicio: Se deja el onDispose vacío,
+    // ya que la lógica de pausa la gestiona el juego (CameraOCRScreen.kt),
+    // y la detención final la gestiona MainActivity (onStop/onDestroy).
+    DisposableEffect(Unit) {
+        onDispose {
+            // La música de la APP DEBE persistir al navegar al perfil del hijo.
+            // Si la app se destruye aquí (lo cual no debería pasar en navegación normal),
+            // MainActivity.onStop() la detendrá.
+        }
+    }
+
+    // --- FIN LÓGICA DE MÚSICA DE FONDO ---
+
     Scaffold(
+        // ... (Resto del Scaffold y la UI se mantienen sin cambios)
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             AppHeader(

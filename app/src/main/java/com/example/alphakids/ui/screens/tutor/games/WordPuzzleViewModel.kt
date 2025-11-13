@@ -26,9 +26,13 @@ class WordPuzzleViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WordPuzzleUiState())
     val uiState: StateFlow<WordPuzzleUiState> = _uiState.asStateFlow()
 
+    private val _selectedWord = MutableStateFlow<String?>(null)
+    val selectedWord: StateFlow<String?> = _selectedWord.asStateFlow()
+
     fun loadWordData(assignmentId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _selectedWord.value = null
 
             try {
                 val assignment = firestore.collection("asignaciones")
@@ -41,11 +45,13 @@ class WordPuzzleViewModel @Inject constructor(
                     isLoading = false,
                     assignment = assignment
                 )
+                _selectedWord.value = assignment?.palabraTexto
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = e.message ?: "Error desconocido"
                 )
+                _selectedWord.value = null
             }
         }
     }

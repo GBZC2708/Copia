@@ -19,6 +19,8 @@ class StudentRepositoryImpl @Inject constructor(
 ) : StudentRepository {
 
     private val estudiantesCol = db.collection("estudiantes")
+    private val usuariosCol = db.collection("usuarios")
+    private val docentesCol = db.collection("docentes")
 
     override suspend fun createStudent(estudiante: Estudiante): CreateStudentResult {
         return try {
@@ -46,5 +48,33 @@ class StudentRepositoryImpl @Inject constructor(
             Log.e("StudentRepo", "Error in student flow for tutor $tutorId", exception)
             emit(emptyList())
         }
+    }
+
+    override fun getDocentes(institucionId: String?): Flow<List<Pair<String, String>>> = flow {
+        val usuariosQuery = usuariosCol.whereEqualTo("rol", "docente")
+
+        val usuariosSnapshot = usuariosQuery.get().await()
+        val usuarios = usuariosSnapshot.documents.mapNotNull { document ->
+            val uid = document.id
+            val nombre = document.getString("nombre")?.trim().orEmpty()
+            val apellido = document.getString("apellido")?.trim().orEmpty()
+            if (nombre.isBlank() && apellido.isBlank()) {
+                null
+            } else {
+                uid to listOf(nombre, apellido)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
+            }
+        }
+
+        val filteredUsuarios = if (institucionId.isNullOrBlank()) {
+            usuarios
+        } else {
+            val docentesSnapshot = docentesCol.whereEqualTo("idInstitucion", institucionId).get().await()
+            val docentesIds = docentesSnapshot.documents.map { it.id }.toSet()
+            usuarios.filter { docentesIds.contains(it.first) }
+        }
+
+        emit(filteredUsuarios.sortedBy { it.second.lowercase() })
     }
 }

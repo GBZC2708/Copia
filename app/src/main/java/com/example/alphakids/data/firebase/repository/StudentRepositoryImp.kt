@@ -1,6 +1,7 @@
 package com.example.alphakids.data.firebase.repository
 
 import android.util.Log
+import com.example.alphakids.data.firebase.models.Docente
 import com.example.alphakids.data.firebase.models.Estudiante
 import com.example.alphakids.domain.repository.CreateStudentResult
 import com.example.alphakids.domain.repository.StudentRepository
@@ -71,7 +72,10 @@ class StudentRepositoryImpl @Inject constructor(
             usuarios
         } else {
             val docentesSnapshot = docentesCol.whereEqualTo("idInstitucion", institucionId).get().await()
-            val docentesIds = docentesSnapshot.documents.map { it.id }.toSet()
+            val docentes = docentesSnapshot.toObjects(Docente::class.java)
+            val docentesIds = docentes.mapNotNull { docente ->
+                docente.uid.takeIf { it.isNotBlank() }
+            }.toSet()
             usuarios.filter { docentesIds.contains(it.first) }
         }
 

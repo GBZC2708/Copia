@@ -117,10 +117,15 @@ class StudentViewModel @Inject constructor(
         loadDocentesJob = viewModelScope.launch {
             _docentesUi.value = UiState.Loading
             studentRepository.getDocentes(institucionId?.takeIf { it.isNotBlank() })
-                .map { docentes -> docentes.map { (uid, nombre) -> DocenteUi(uid, nombre) } }
+                .map { docentes ->
+                    docentes
+                        .map { (uid, nombre) -> DocenteUi(uid, nombre) }
+                        .sortedBy { it.nombreCompleto.lowercase() }
+                }
                 .catch { e ->
                     Log.e("StudentViewModel", "Error loading docentes", e)
-                    _docentesUi.value = UiState.Error(e.message ?: "Error al cargar docentes")
+                    _docentesUi.value = UiState.Error("Error al cargar docentes")
+                    return@launch
                 }
                 .collect { docentes ->
                     _docentesUi.value = UiState.Success(docentes)

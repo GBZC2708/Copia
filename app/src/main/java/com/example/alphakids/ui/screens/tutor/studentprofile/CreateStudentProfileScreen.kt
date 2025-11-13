@@ -36,7 +36,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.alphakids.ui.student.DocenteUi
 import com.example.alphakids.ui.student.StudentUiState
 import com.example.alphakids.ui.student.StudentViewModel
 import com.example.alphakids.ui.student.UiState
@@ -63,8 +62,6 @@ fun CreateStudentProfileScreen(
     val instituciones = listOf("Institución A", "Institución B", "Otra")
     val grados = listOf("Inicial 3 años", "Inicial 4 años", "Inicial 5 años")
     val secciones = listOf("A", "B", "C")
-    // 1. Lista de opciones para Docentes
-    val docentes = listOf("Prof. Ana López", "Prof. Luis García", "Prof. Marta Torres")
 
     var selectedInstitucion by remember { mutableStateOf<String?>(null) }
     var selectedGrado by remember { mutableStateOf<String?>(null) }
@@ -83,11 +80,15 @@ fun CreateStudentProfileScreen(
     }
     val isLoading = uiState is StudentUiState.Loading
     val isDocentesLoading = docentesUiState is UiState.Loading
+    val docentesDisponibles = docentesUiState is UiState.Success && docentes.isNotEmpty()
     val noDocentesAvailable = docentesUiState is UiState.Success && docentes.isEmpty()
+    val selectedInstitucionIdOrNull = selectedInstitucion?.takeIf { it.isNotBlank() }
+    var lastLoadedInstitucionId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.loadDocentes(selectedInstitucion?.takeIf { !it.isNullOrBlank() })
+        viewModel.loadDocentes(selectedInstitucionIdOrNull)
+        lastLoadedInstitucionId = selectedInstitucionIdOrNull
         viewModel.createUiState.collectLatest { state ->
             when (state) {
                 is StudentUiState.Success -> {
@@ -104,15 +105,18 @@ fun CreateStudentProfileScreen(
         }
     }
 
-    LaunchedEffect(selectedInstitucion) {
-        viewModel.loadDocentes(selectedInstitucion?.takeIf { !it.isNullOrBlank() })
+    LaunchedEffect(selectedInstitucionIdOrNull) {
+        if (selectedInstitucionIdOrNull != lastLoadedInstitucionId) {
+            viewModel.loadDocentes(selectedInstitucionIdOrNull)
+            lastLoadedInstitucionId = selectedInstitucionIdOrNull
+        }
     }
 
     LaunchedEffect(docentesUiState) {
         if (docentesUiState is UiState.Error) {
             Toast.makeText(
                 context,
-                (docentesUiState as UiState.Error).message,
+                "Error al cargar docentes",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -123,12 +127,6 @@ fun CreateStudentProfileScreen(
             selectedDocenteId = null
             selectedDocenteName = null
         }
-    }
-
-    val docentePlaceholder = if (noDocentesAvailable) {
-        "Sin docentes disponibles"
-    } else {
-        "Selecciona docente"
     }
 
     Scaffold(
@@ -212,19 +210,6 @@ fun CreateStudentProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- Campo Docente agregado ---
-                LabeledDropdownField(
-                    label = "Docente",
-                    selectedOption = selectedDocente ?: "",
-                    placeholderText = "Selecciona docente (Opcional)",
-                    onClick = { /* TODO: Mostrar menú dropdown real */
-                        // En un caso real, aquí usarías una función para actualizar selectedDocente
-                        selectedDocente = docentes.firstOrNull() // Simulación de selección
-                    }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                // -----------------------------
-
                 LabeledDropdownField(
                     label = "Institución",
                     selectedOption = selectedInstitucion ?: "",
@@ -251,15 +236,26 @@ fun CreateStudentProfileScreen(
                 LabeledDropdownField(
                     label = "Docente",
                     selectedOption = selectedDocenteName ?: "",
-                    placeholderText = docentePlaceholder,
+                    placeholderText = "Selecciona docente",
                     onClick = {
-                        if (docentes.isEmpty()) {
-                            Toast.makeText(context, "Sin docentes disponibles", Toast.LENGTH_SHORT).show()
-                        } else {
+                        if (docentesDisponibles) {
                             showDocenteDialog = true
+                        } else if (noDocentesAvailable) {
+                            Toast.makeText(context, "Sin docentes disponibles", Toast.LENGTH_SHORT).show()
+                        } else if (docentesUiState is UiState.Error) {
+                            Toast.makeText(context, "Error al cargar docentes", Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
+
+                if (noDocentesAvailable) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Sin docentes disponibles",
+                        fontFamily = dmSansFamily,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -270,6 +266,10 @@ fun CreateStudentProfileScreen(
                 PrimaryButton(
                     text = "Crear Perfil",
                     onClick = {
+                        if (!docentesDisponibles) {
+                            Toast.makeText(context, "No hay docentes disponibles", Toast.LENGTH_SHORT).show()
+                            return@PrimaryButton
+                        }
                         val edadInt = edadString.toIntOrNull()
                         if (nombre.isBlank()) {
                             Toast.makeText(context, "Ingresa el nombre", Toast.LENGTH_SHORT).show()
@@ -299,7 +299,7 @@ fun CreateStudentProfileScreen(
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading && !isDocentesLoading && docentes.isNotEmpty()
+                    enabled = !isLoading && !isDocentesLoading && docentesDisponibles
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -355,7 +355,7 @@ fun CreateStudentProfileScreen(
                                 .fillMaxWidth()
                                 .heightIn(max = 320.dp)
                         ) {
-                            items(filteredDocentes, key = DocenteUi::uid) { docente ->
+                            items(filteredDocentes, key = { it.uid }) { docente ->
                                 TextButton(
                                     onClick = {
                                         selectedDocenteId = docente.uid

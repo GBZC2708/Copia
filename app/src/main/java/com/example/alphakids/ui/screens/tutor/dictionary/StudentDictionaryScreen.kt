@@ -1,47 +1,30 @@
 package com.example.alphakids.ui.screens.tutor.dictionary
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Checkroom
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material.icons.rounded.Pets
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.Store
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.alphakids.ui.components.AppHeader
-import com.example.alphakids.ui.components.BottomNavItem
-import com.example.alphakids.ui.components.CustomFAB
-import com.example.alphakids.ui.components.InfoChip
-import com.example.alphakids.ui.components.MainBottomBar
-import com.example.alphakids.ui.components.SearchBar
-import com.example.alphakids.ui.components.WordListItem
+import com.example.alphakids.ui.components.*
+import com.example.alphakids.ui.screens.tutor.games.WordStorage
 import com.example.alphakids.ui.theme.AlphakidsTheme
+import kotlinx.coroutines.delay
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun StudentDictionaryScreen(
@@ -52,6 +35,19 @@ fun StudentDictionaryScreen(
     onBottomNavClick: (String) -> Unit,
     currentRoute: String = "dictionary"
 ) {
+    val context = LocalContext.current
+
+    // 🧠 Estado reactivo que contiene las palabras completadas
+    var completedWords by remember { mutableStateOf(WordStorage.getCompletedWords(context)) }
+
+    // 🔁 Efecto para refrescar el listado cada segundo
+    LaunchedEffect(Unit) {
+        while (true) {
+            completedWords = WordStorage.getCompletedWords(context)
+            delay(1000)
+        }
+    }
+
     val studentItems = listOf(
         BottomNavItem("home", "Inicio", Icons.Rounded.Home),
         BottomNavItem("store", "Tienda", Icons.Rounded.Store),
@@ -59,7 +55,6 @@ fun StudentDictionaryScreen(
     )
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedWordId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -68,20 +63,12 @@ fun StudentDictionaryScreen(
                 title = "Mi Diccionario",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Regresar",
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", modifier = Modifier.size(24.dp))
                     }
                 },
                 actionIcon = {
                     IconButton(onClick = onLogoutClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar sesión", modifier = Modifier.size(24.dp))
                     }
                 }
             )
@@ -123,30 +110,53 @@ fun StudentDictionaryScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                InfoChip(text = "Categoría 1", isSelected = false)
-                InfoChip(text = "Categoría 2", isSelected = false)
-                InfoChip(text = "Categoría 3", isSelected = false)
+                InfoChip(text = "Aprendidas", isSelected = true)
+                InfoChip(text = "Todas", isSelected = false)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(10) { index ->
-                    WordListItem(
-                        title = "PALABRA ${index + 1}",
-                        subtitle = "Categoría",
-                        icon = Icons.Rounded.Checkroom,
-                        chipText = "Fácil",
-                        isSelected = (selectedWordId == "id_$index"),
-                        onClick = { selectedWordId = "id_$index" },
-                        imageUrl = null // Aquí se pasaría la URL real de la imagen
+            // 🔍 Filtro por búsqueda
+            val filteredWords = completedWords.filter {
+                it.word.contains(searchQuery, ignoreCase = true)
+            }
+
+            // 🧾 Si no hay palabras completadas
+            if (filteredWords.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Aún no has completado palabras.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(filteredWords.size) { index ->
+                        val word = filteredWords[index]
+                        WordListItem(
+                            title = word.word,
+                            subtitle = "Aprendida el ${formatDate(word.timestamp)}",
+                            icon = Icons.Rounded.Checkroom,
+                            chipText = "Completada",
+                            isSelected = false,
+                            onClick = { onWordClick(word.word) },
+                            imageUrl = null
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun formatDate(timestamp: Long): String {
+    val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
 
 @Preview(showBackground = true)

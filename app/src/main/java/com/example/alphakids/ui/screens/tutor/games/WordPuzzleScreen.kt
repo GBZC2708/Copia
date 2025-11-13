@@ -1,5 +1,6 @@
 package com.example.alphakids.ui.screens.tutor.games
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,11 +14,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.alphakids.ui.screens.tutor.games.components.WordPuzzleCard
 import com.example.alphakids.ui.theme.dmSansFamily
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WordPuzzleScreen(
     assignmentId: String,
+    studentId: String,
     onBackClick: () -> Unit,
     onTakePhotoClick: (String) -> Unit,
     viewModel: WordPuzzleViewModel = hiltViewModel()
@@ -35,7 +39,7 @@ fun WordPuzzleScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Puzzle de Palabra",
+                    text = "\uD83D\uDD0D ¡Busca las Letras! \uD83D\uDD0D",
                     fontFamily = dmSansFamily,
                     fontWeight = FontWeight.Bold
                 )
@@ -73,13 +77,20 @@ fun WordPuzzleScreen(
                 }
             }
 
-            else -> {
+            // --- ¡CAMBIO 2! Añadido 'else if' para manejar el caso de que 'assignment' sea nulo ---
+            uiState.assignment != null -> {
+                // Asignamos las variables que necesitamos
+                val targetWord = uiState.assignment!!.palabraTexto
+                val wordImage = uiState.assignment!!.palabraImagen
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    // ... en tu WordPuzzleScreen.kt
+
                     WordPuzzleCard(
                         wordLength = selectedWord?.length ?: 0,
                         wordImage = uiState.assignment?.palabraImagen,
@@ -88,6 +99,7 @@ fun WordPuzzleScreen(
                             selectedWord?.let(onTakePhotoClick)
                         }
                     )
+// ...
                 }
             }
         }

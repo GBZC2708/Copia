@@ -48,7 +48,7 @@ fun AssignedWordsScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Palabras Asignadas",
+                    text = "\uD83D\uDE80 ¡Adivina y Escanea! \uD83D\uDE80",
                     fontFamily = dmSansFamily,
                     fontWeight = FontWeight.Bold
                 )
@@ -154,18 +154,27 @@ private fun AssignedWordsList(
 ) {
     val context = LocalContext.current
 
-    // Cargar palabras completadas
+    // 🧠 Estado con palabras completadas
     var completedSet by remember { mutableStateOf<Set<String>>(emptySet()) }
 
+    // 🔁 Actualiza reactivamente cada vez que el usuario completa una palabra
     LaunchedEffect(Unit) {
-        completedSet = WordHistoryStorage
-            .getCompletedWords(context)
-            .map { it.word.trim().uppercase() }
-            .toSet()
+        while (true) {
+            completedSet = WordStorage
+                .getCompletedWords(context)
+                .map { it.word.trim().uppercase() }
+                .toSet()
+            kotlinx.coroutines.delay(1000) // refresca cada segundo
+        }
     }
 
-    // Filtrar solo las palabras pendientes
-    val pendingAssignments = assignedWords.filter { assignment ->
+    // ✨ 1. Evitar duplicados
+    val uniqueAssignments = assignedWords.distinctBy {
+        it.palabraTexto?.trim()?.uppercase()
+    }
+
+    // ✨ 2. Filtrar las completadas
+    val pendingAssignments = uniqueAssignments.filter { assignment ->
         val word = (assignment.palabraTexto ?: "").trim().uppercase()
         word !in completedSet
     }
@@ -184,15 +193,25 @@ private fun AssignedWordsList(
     }
 }
 
+
 @Composable
 fun AssignedWordCard(
     assignment: AsignacionPalabra,
     onClick: () -> Unit
 ) {
+    // Lógica para limpiar la dificultad
+    val dificultadMostrada = if (assignment.palabraDificultad.isNullOrBlank() ||
+        assignment.palabraDificultad.equals("desconocida", ignoreCase = true)) {
+        "Normal"
+    } else {
+        assignment.palabraDificultad!! // Sabemos que no es nulo o blanco aquí
+    }
+
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+            .fillMaxWidth(),
+        // --- CAMBIO: Quitamos el .clickable de la Card ---
+        // .clickable { onClick() }, <-- ESTO SE FUE
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -203,63 +222,65 @@ fun AssignedWordCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Mantener la alineación de la fila principal
         ) {
-            AsyncImage(
-                model = assignment.palabraImagen,
-                contentDescription = assignment.palabraTexto,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
-            )
+            // ... (Tu columna de Imagen y Categoría se mantiene igual) ...
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AsyncImage(
+                    model = assignment.palabraImagen,
+                    contentDescription = assignment.palabraTexto,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentScale = ContentScale.Crop
+                )
+                Text(
+                    text = "Categoría: Neutra",
+                    fontFamily = dmSansFamily,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
+            // ... (Tu columna de Texto y Dificultad se mantiene igual) ...
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "", // Palabra oculta
+                    text = "*".repeat(assignment.palabraTexto?.length ?: 0),
                     fontFamily = dmSansFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = "Dificultad: ${assignment.palabraDificultad ?: "Normal"}",
+                    text = "Dificultad: $dificultadMostrada",
                     fontFamily = dmSansFamily,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            DifficultyChip(assignment.palabraDificultad ?: "Normal")
+            // --- ¡CAMBIO GRANDE AQUÍ! ---
+            // Reemplazamos el DifficultyChip por un Button
+            Button(
+                onClick = onClick, // El botón ahora maneja el clic
+                shape = RoundedCornerShape(16.dp), // Forma similar al chip
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp) // Padding
+            ) {
+                Text(
+                    text = "Adivinar",
+                    fontFamily = dmSansFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp
+                )
+            }
+            // --- FIN DEL CAMBIO ---
         }
-    }
-}
-
-@Composable
-private fun DifficultyChip(level: String) {
-    val color = when (level.lowercase()) {
-        "fácil" -> Color(0xFF4CAF50)
-        "difícil" -> Color(0xFFF44336)
-        else -> Color(0xFFFF9800)
-    }
-
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = color
-    ) {
-        Text(
-            text = level,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            color = Color.White,
-            fontSize = 12.sp,
-            fontFamily = dmSansFamily,
-            fontWeight = FontWeight.Medium
-        )
     }
 }

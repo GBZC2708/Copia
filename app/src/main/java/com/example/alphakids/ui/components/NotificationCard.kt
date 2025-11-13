@@ -21,11 +21,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage // <-- ¡CAMBIO 1! Importar AsyncImage
 import com.example.alphakids.ui.theme.AlphakidsTheme
 import com.example.alphakids.ui.theme.dmSansFamily
 
@@ -34,7 +37,8 @@ fun NotificationCard(
     modifier: Modifier = Modifier,
     title: String,
     content: String,
-    icon: ImageVector,
+    imageUrl: String? = null, // <-- ¡CAMBIO 2! Aceptar URL (String)
+    icon: ImageVector? = null, // <-- ¡CAMBIO 3! Aceptar Icono (fallback)
     onCloseClick: () -> Unit
 ) {
     Card(
@@ -52,12 +56,25 @@ fun NotificationCard(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
+                // --- ¡CAMBIO 4! Lógica para mostrar imagen o icono ---
+                if (imageUrl != null) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = title,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                // --------------------------------------------------
 
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -104,6 +121,7 @@ fun NotificationCardPreview() {
             modifier = Modifier.padding(16.dp),
             title = "Tittle",
             content = "Content",
+            imageUrl = null, // <-- ¡CAMBIO 5!
             icon = Icons.Rounded.Checkroom,
             onCloseClick = {}
         )

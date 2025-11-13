@@ -63,6 +63,8 @@ fun CreateStudentProfileScreen(
     val instituciones = listOf("Institución A", "Institución B", "Otra")
     val grados = listOf("Inicial 3 años", "Inicial 4 años", "Inicial 5 años")
     val secciones = listOf("A", "B", "C")
+    // 1. Lista de opciones para Docentes
+    val docentes = listOf("Prof. Ana López", "Prof. Luis García", "Prof. Marta Torres")
 
     var selectedInstitucion by remember { mutableStateOf<String?>(null) }
     var selectedGrado by remember { mutableStateOf<String?>(null) }
@@ -209,6 +211,19 @@ fun CreateStudentProfileScreen(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // --- Campo Docente agregado ---
+                LabeledDropdownField(
+                    label = "Docente",
+                    selectedOption = selectedDocente ?: "",
+                    placeholderText = "Selecciona docente (Opcional)",
+                    onClick = { /* TODO: Mostrar menú dropdown real */
+                        // En un caso real, aquí usarías una función para actualizar selectedDocente
+                        selectedDocente = docentes.firstOrNull() // Simulación de selección
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                // -----------------------------
 
                 LabeledDropdownField(
                     label = "Institución",

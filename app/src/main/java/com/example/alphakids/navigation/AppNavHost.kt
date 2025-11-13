@@ -1,5 +1,6 @@
 package com.example.alphakids.navigation
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -50,6 +51,11 @@ import com.example.alphakids.ui.screens.tutor.pets.StudentPetDetailScreen
 import com.example.alphakids.ui.screens.profile.EditProfileScreen
 
 import androidx.compose.material.icons.rounded.Warning
+import com.example.alphakids.ui.screens.tutor.games.GameFailureScreen
+import com.example.alphakids.ui.screens.tutor.games.GameResultScreen
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 @Composable
@@ -198,27 +204,6 @@ fun AppNavHost(
         // JUEGOS
         // ============================================================
         composable(
-            Routes.MY_GAMES,
-            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
-        ) { entry ->
-            val studentId = entry.arguments?.getString("studentId") ?: "default"
-            MyGamesScreen(
-                onBackClick = { navController.popBackStack() },
-                onWordsGameClick = { navController.navigate(Routes.gameWordsRoute(studentId)) }
-            )
-        }
-
-        composable(
-            Routes.GAME_WORDS,
-            arguments = listOf(navArgument("studentId") { type = NavType.StringType })
-        ) {
-            GameWordsScreen(
-                onBackClick = { navController.popBackStack() },
-                onWordClick = { navController.navigate(Routes.GAME) }
-            )
-        }
-
-        composable(
             Routes.ASSIGNED_WORDS,
             arguments = listOf(navArgument("studentId") { type = NavType.StringType })
         ) { entry ->
@@ -228,53 +213,173 @@ fun AppNavHost(
                 studentId = studentId,
                 onBackClick = { navController.popBackStack() },
                 onWordClick = { assignment ->
-                    navController.navigate(Routes.wordPuzzleRoute(assignment.id ?: ""))
+                    // 🚨 CORRECCIÓN: Ahora pasamos el studentId a la ruta de WordPuzzle
+                    navController.navigate(Routes.wordPuzzleRoute(assignment.id ?: "", studentId))
                 }
             )
         }
 
         composable(
-            Routes.WORD_PUZZLE,
-            arguments = listOf(navArgument("assignmentId") { type = NavType.StringType })
+            route = Routes.WORD_PUZZLE,
+            arguments = listOf(
+                navArgument("assignmentId") { type = NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType } // 🚨 AÑADIDO: Requerido
+            )
         ) { entry ->
             val assignmentId = entry.arguments?.getString("assignmentId") ?: ""
+            val studentId = entry.arguments?.getString("studentId") ?: "default" // 🚨 AÑADIDO
 
+            // Usamos un NavBackStackEntry que contiene los datos del assignment
             val parentEntry = remember(entry) {
-                navController.getBackStackEntry(Routes.ASSIGNED_WORDS)
+                // En este caso, usamos el entry actual si el VM es específico para el puzzle
+                entry
+                // Si el VM es compartido, el backstack de ASSIGNED_WORDS no siempre es correcto.
+                // Mejor hiltViewModel() sin un entry si el VM carga datos con assignmentId.
+                // Mantendremos la estructura original de usar el entry actual para simplicidad.
             }
             val viewModel: WordPuzzleViewModel = hiltViewModel(parentEntry)
-            val uiState by viewModel.uiState.collectAsState()
-
-            LaunchedEffect(assignmentId) {
-                viewModel.loadWordData(assignmentId)
-            }
 
             WordPuzzleScreen(
                 assignmentId = assignmentId,
+                studentId = studentId, // 🚨 PASADO: El studentId
                 onBackClick = { navController.popBackStack() },
-                onTakePhotoClick = {
-                    val targetWord = uiState.assignment?.palabraTexto ?: ""
-                    if (targetWord.isNotEmpty()) {
-                        navController.navigate(Routes.cameraOCRRoute(assignmentId, targetWord))
+                navController = navController
+            )
+        }
+
+
+        composable(
+            route = Routes.CAMERA_OCR,
+            arguments = listOf(
+                navArgument("assignmentId") { type = NavType.StringType },
+                navArgument("targetWord") { type = NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType }, // 🚨 CRÍTICO: Requerido
+                navArgument("imageUrl") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { entry ->
+
+            val encodedUrl = entry.arguments?.getString("imageUrl")
+            val targetWord = entry.arguments?.getString("targetWord") ?: ""
+            val assignmentId = entry.arguments?.getString("assignmentId") ?: ""
+            val studentId = entry.arguments?.getString("studentId") ?: "default" // 🚨 AÑADIDO
+
+            // 🚨 DECODIFICACIÓN CRÍTICA
+            val decodedWord = URLDecoder.decode(targetWord, StandardCharsets.UTF_8.name())
+            val decodedUrl = encodedUrl?.let {
+                URLDecoder.decode(it, StandardCharsets.UTF_8.name())
+            }
+
+            Log.d("DebugImagen", "PASO 2 (NAVHOST): ¿URL recibida y decodificada? URL = $decodedUrl")
+
+            CameraOCRScreen(
+                assignmentId = assignmentId,
+                targetWord = decodedWord,
+                studentId = studentId, // 🚨 PASADO: El studentId
+                targetImageUrl = decodedUrl,
+                onBackClick = { navController.popBackStack() },
+
+                // --- LÓGICA DE ÉXITO CORREGIDA (Usando helper) ---
+                onWordCompleted = { word, completedImageUrl, sId ->
+                    val encodedResultWord = URLEncoder.encode(word, StandardCharsets.UTF_8.name())
+                    val encodedResultUrl = completedImageUrl?.let {
+                        URLEncoder.encode(it, StandardCharsets.UTF_8.name())
+                    }
+
+                    // 🚨 Usamos la función helper que incluye el studentId y la imagen
+                    val newRoute = Routes.gameResultRoute(encodedResultWord, sId, encodedResultUrl)
+
+                    navController.navigate(newRoute) {
+                        popUpTo(Routes.WORD_PUZZLE_BASE) { inclusive = true } // Elimina Puzzle y Camera
+                    }
+                },
+
+                // --- Lógica de Tiempo Agotado (Usando helper) ---
+                onTimeExpired = { expiredImageUrl, sId ->
+                    val encodedResultUrl = expiredImageUrl?.let {
+                        URLEncoder.encode(it, StandardCharsets.UTF_8.name())
+                    }
+
+                    // 🚨 Usamos la función helper que incluye el studentId y la imagen
+                    val newRoute = Routes.gameFailureRoute(sId, encodedResultUrl)
+
+                    navController.navigate(newRoute) {
+                        popUpTo(Routes.WORD_PUZZLE_BASE) { inclusive = true } // Elimina Puzzle y Camera
                     }
                 }
             )
         }
 
+        // --- Pantalla de Éxito ---
         composable(
-            Routes.CAMERA_OCR,
+            route = Routes.GAME_RESULT,
             arguments = listOf(
-                navArgument("assignmentId") { type = NavType.StringType },
-                navArgument("targetWord") { type = NavType.StringType }
+                navArgument("word") { type = NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType }, // 🚨 CRÍTICO: Requerido
+                navArgument("imageUrl") {
+                    type = NavType.StringType
+                    nullable = true
+                }
             )
         ) { entry ->
-            CameraOCRScreen(
-                assignmentId = entry.arguments?.getString("assignmentId") ?: "",
-                targetWord = entry.arguments?.getString("targetWord") ?: "",
-                onBackClick = { navController.popBackStack() },
-                onWordCompleted = { navController.popBackStack() }
+            val word = entry.arguments?.getString("word") ?: "PALABRA"
+            val studentId = entry.arguments?.getString("studentId") ?: "default" // 🚨 AÑADIDO
+            val encodedUrl = entry.arguments?.getString("imageUrl")
+
+            // Decodificamos el word (por si venía codificado con espacios)
+            val decodedWord = URLDecoder.decode(word, StandardCharsets.UTF_8.name())
+
+            val imageUrl = encodedUrl?.let {
+                URLDecoder.decode(it, StandardCharsets.UTF_8.name())
+            }
+
+            GameResultScreen(
+                word = decodedWord,
+                imageUrl = imageUrl,
+                onContinueClick = {
+                    // "Continuar" te devuelve a la lista de palabras asignadas para el estudiante
+                    navController.popBackStack(Routes.ASSIGNED_WORDS, inclusive = false)
+                },
+                onBackClick = {
+                    // "Volver al Menú" te lleva al Home
+                    navController.popBackStack(Routes.HOME, inclusive = false)
+                }
             )
         }
+
+        // --- Pantalla de Fallo (Tiempo Agotado) ---
+        composable(
+            route = Routes.GAME_FAILURE,
+            arguments = listOf(
+                navArgument("studentId") { type = NavType.StringType }, // 🚨 CRÍTICO: Requerido
+                navArgument("imageUrl") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { entry ->
+            val studentId = entry.arguments?.getString("studentId") ?: "default" // 🚨 AÑADIDO
+            val encodedUrl = entry.arguments?.getString("imageUrl")
+            val imageUrl = encodedUrl?.let {
+                URLDecoder.decode(it, StandardCharsets.UTF_8.name())
+            }
+
+            GameFailureScreen(
+                imageUrl = imageUrl,
+                onRetryClick = {
+                    // "Reintentar" (Asumo que vuelve al listado de palabras asignadas para reelegir)
+                    navController.popBackStack(Routes.ASSIGNED_WORDS, inclusive = false)
+                },
+
+                onExitClick = {
+                    // "Salir" te lleva al Home del estudiante
+                    navController.popBackStack(Routes.HOME, inclusive = false)
+                }
+            )
+        }
+
 
         // ============================================================
         // DICCIONARIO

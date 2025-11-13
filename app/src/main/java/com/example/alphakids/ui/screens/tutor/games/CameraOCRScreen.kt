@@ -52,13 +52,15 @@ import com.example.alphakids.ui.screens.tutor.games.TextAnalyzer
 fun CameraOCRScreen(
     assignmentId: String,
     targetWord: String,
+    studentId: String,
+    targetImageUrl: String?,
     onBackClick: () -> Unit,
-    onWordCompleted: () -> Unit,
-    viewModel: CameraOCRViewModel = hiltViewModel()
+    onWordCompleted: (word: String, imageUrl: String?, studentId: String) -> Unit,
+    onTimeExpired: (imageUrl: String?, studentId: String) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         if (cameraPermissionState.status != PermissionStatus.Granted) {
@@ -162,6 +164,18 @@ fun CameraOCRScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                }
+            )
+        } else {
+            Column(
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Se necesita permiso de cámara", color = Color.White, fontFamily = dmSansFamily)
+                Spacer(Modifier.height(16.dp))
+                Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
+                    Text("Conceder Permiso")
                 }
             }
 

@@ -23,7 +23,7 @@ import com.example.alphakids.ui.theme.AlphakidsTheme
 fun CameraActionBar(
     modifier: Modifier = Modifier,
     onFlashClick: () -> Unit,
-    onShutterClick: () -> Unit,
+    onShutterClick: (() -> Unit)? = null, // <-- ¡CAMBIO 1! Hecho nulable
     onFlipCameraClick: () -> Unit
 ) {
     Row(
@@ -46,16 +46,20 @@ fun CameraActionBar(
         )
 
         // Botón Central (Grande y Circular)
-        CustomFAB(
-            icon = Icons.Rounded.CameraAlt,
-            contentDescription = "Tomar Foto",
-            onClick = onShutterClick,
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            containerSize = 68.dp,
-            iconSize = 48.dp,
-            shape = FloatingActionButtonDefaults.shape
-        )
+        // --- ¡CAMBIO 2! ---
+        // Este botón solo aparece si onShutterClick NO es nulo
+        if (onShutterClick != null) {
+            CustomFAB(
+                icon = Icons.Rounded.CameraAlt,
+                contentDescription = "Tomar Foto",
+                onClick = onShutterClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                containerSize = 68.dp,
+                iconSize = 48.dp,
+                shape = FloatingActionButtonDefaults.shape
+            )
+        }
 
         // Botón Lateral (Pequeño)
         CustomFAB(
@@ -78,6 +82,19 @@ fun CameraActionBarPreview() {
         CameraActionBar(
             onFlashClick = {},
             onShutterClick = {},
+            onFlipCameraClick = {}
+        )
+    }
+}
+
+// Preview sin el botón de obturador
+@Preview(showBackground = true, backgroundColor = 0xFF212121)
+@Composable
+fun CameraActionBarNoShutterPreview() {
+    AlphakidsTheme {
+        CameraActionBar(
+            onFlashClick = {},
+            onShutterClick = null, // <-- Así se verá en tu OCRScreen
             onFlipCameraClick = {}
         )
     }
